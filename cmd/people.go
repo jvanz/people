@@ -1,3 +1,4 @@
+// Package cmd contains all the commands used by the people project
 package cmd
 
 import (
