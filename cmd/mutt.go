@@ -40,7 +40,7 @@ var list = &cobra.Command{
 			if strings.Contains(strings.ToLower(people.Nickname), args[0]) ||
 				strings.Contains(strings.ToLower(people.Name), args[0]) ||
 				strings.Contains(people.Email, args[0]) {
-				formatOutput(&people)
+				fmt.Printf("\n%s", formatPeopleOutput(&people))
 			}
 		}
 	},
@@ -78,11 +78,11 @@ var add = &cobra.Command{
 					}
 				}
 				if add {
-					json, err := json.Marshal(new_people)
+					jsondata, err := json.Marshal(new_people)
 					if err != nil {
 						panic(err)
 					}
-					writeJsonFile(json)
+					writeJsonFile(jsondata)
 					fmt.Printf("Added %s\n", new_people.Email)
 				}
 			}
@@ -105,16 +105,16 @@ func isTheSamePerson(p1, p2 *People) bool {
 }
 
 // writeJsonFile writes the json data of a new entry in the database
-func writeJsonFile(json []byte) {
+func writeJsonFile(jsondata []byte) {
 	f, err := os.OpenFile(getDataFilename(), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
-	entry := fmt.Sprintf("%s\n", json)
+	entry := fmt.Sprintf("%s\n", jsondata)
 	w := bufio.NewWriter(f)
 	nn, err := w.WriteString(entry)
-	if nn < len(json) {
+	if nn < len(jsondata) {
 		log.Print(err)
 	}
 	w.Flush()
@@ -147,8 +147,8 @@ func loadPeople() []People {
 
 // formatOutput prints in the stdout the data from the given person. This printed
 // data is formated to allow mutt read it and used the address
-func formatOutput(person *People) {
-	fmt.Printf("\n%s\t%s\t%s\n", person.Email, person.Name, " ")
+func formatPeopleOutput(person *People) string {
+	return fmt.Sprintf("%s\t%s\t%s\n", person.Email, person.Name, " ")
 }
 
 // getDataFilename returns a string of the database file path
