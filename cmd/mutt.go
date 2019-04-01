@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"log"
 	"os"
-	"os/user"
 	"regexp"
 	"strings"
 )
@@ -37,9 +37,10 @@ var list = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var address_book = loadPeople()
 		for _, people := range address_book {
-			if strings.Contains(strings.ToLower(people.Nickname), args[0]) ||
-				strings.Contains(strings.ToLower(people.Name), args[0]) ||
-				strings.Contains(people.Email, args[0]) {
+			if len(args) == 0 ||
+				(strings.Contains(strings.ToLower(people.Nickname), args[0]) ||
+					strings.Contains(strings.ToLower(people.Name), args[0]) ||
+					strings.Contains(people.Email, args[0])) {
 				fmt.Printf("\n%s", formatPeopleOutput(&people))
 			}
 		}
@@ -60,7 +61,7 @@ var add = &cobra.Command{
 				email := re.ReplaceAllString(line, fmt.Sprintf("${%s}", re.SubexpNames()[3]))
 				id, err := uuid.NewRandom()
 				if err != nil {
-					panic(err)
+					log.Fatal(err)
 				}
 				new_people := People{
 					ID:       id,
@@ -80,7 +81,7 @@ var add = &cobra.Command{
 				if add {
 					jsondata, err := json.Marshal(new_people)
 					if err != nil {
-						panic(err)
+						log.Fatal(err)
 					}
 					writeJsonFile(jsondata)
 					fmt.Printf("Added %s\n", new_people.Email)
@@ -108,7 +109,7 @@ func isTheSamePerson(p1, p2 *People) bool {
 func writeJsonFile(jsondata []byte) {
 	f, err := os.OpenFile(getDataFilename(), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer f.Close()
 	entry := fmt.Sprintf("%s\n", jsondata)
@@ -124,7 +125,7 @@ func writeJsonFile(jsondata []byte) {
 func loadPeople() []People {
 	file, err := os.Open(getDataFilename())
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer file.Close()
 
@@ -133,12 +134,12 @@ func loadPeople() []People {
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if !json.Valid(line) {
-			panic("Invalid JSON")
+			log.Fatal("Invalid JSON")
 		}
 		var people People
 		err := json.Unmarshal(line, &people)
 		if err != nil {
-			panic("Unmarshal failed")
+			log.Fatal("Unmarshal failed")
 		}
 		address_book = append(address_book, people)
 	}
@@ -153,9 +154,6 @@ func formatPeopleOutput(person *People) string {
 
 // getDataFilename returns a string of the database file path
 func getDataFilename() string {
-	user, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return fmt.Sprintf("%s/.people/data", user.HomeDir)
+	log.Printf("Loading data from %s", viper.GetString("datafile"))
+	return viper.GetString("datafile")
 }
