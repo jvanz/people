@@ -123,6 +123,12 @@ func writeJsonFile(jsondata []byte) {
 
 // loadPeople reads the databse and returns a slice with all entries read
 func loadPeople() []People {
+	// if the database file does not exits just return an empty list
+	var address_book []People
+	if _, err := os.Stat(getDataFilename()); os.IsNotExist(err) {
+		return address_book
+	}
+	// the file exist. Let's read it
 	file, err := os.Open(getDataFilename())
 	if err != nil {
 		log.Fatal(err)
@@ -130,7 +136,6 @@ func loadPeople() []People {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	var address_book []People
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if !json.Valid(line) {
