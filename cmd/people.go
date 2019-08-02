@@ -33,7 +33,7 @@ func initConfig() {
 			log.Fatal(err)
 		}
 		viper.AddConfigPath(user.HomeDir)
-		viper.SetConfigName(".peoplerc")
+		viper.SetConfigName(".people")
 	}
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatal(err)
